@@ -37,17 +37,20 @@ confint.medoutcon <- function(object,
 
     # compute the interval around the point estimate
     ci_theta <- ci_norm_bounds * se_eif + object$theta
+    pvalue <- 2 * pnorm(-abs(object$theta/se_eif))
+
   } else if (length(unique(object$outcome)) == 2) {
     # for binary outcomes, create CI on the logit scale and back-transform
     theta_ratio <- stats::qlogis(object$theta)
     grad_ratio_delta <- (1 / object$theta) + (1 / (1 - object$theta))
     se_eif_logit <- sqrt(grad_ratio_delta^2 * object$var)
     ci_theta <- stats::plogis(ci_norm_bounds * se_eif_logit + theta_ratio)
+    pvalue <- 2 * pnorm(-abs(theta_ratio/se_eif_logit))
   }
 
   # set up output CI object
-  ci_out <- c(ci_theta[1], object$theta, ci_theta[2])
-  names(ci_out) <- c("lwr_ci", "est", "upr_ci")
+  ci_out <- c(ci_theta[1], object$theta, ci_theta[2], pvalue)
+  names(ci_out) <- c("lwr_ci", "est", "upr_ci", "pvalue")
   return(ci_out)
 }
 
@@ -80,6 +83,7 @@ summary.medoutcon <- function(object,
     lwr_ci = est_with_ci[1],
     param_est = est_with_ci[2],
     upr_ci = est_with_ci[3],
+    pvalue = est_with_ci[4],
     var_est = object$var,
     eif_mean = mean(object$eif),
     estimator = object$type,
